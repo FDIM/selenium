@@ -32,7 +32,7 @@ WebdriverBackedSelenium.prototype.preprocessParameter = function(value) {
  * value in storedVars. 
  * Variations: ${varName}, ${varName || defaultVarName}, ${varName || 5}
  */
-Selenium.prototype.replaceVariables = function (str) {
+WebdriverBackedSelenium.prototype.replaceVariables = function (str) {
 	var stringResult = str;
 
 	// Find all of the matching variable references
