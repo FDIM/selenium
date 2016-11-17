@@ -29,30 +29,46 @@ WebdriverBackedSelenium.prototype.preprocessParameter = function(value) {
 
 /*
  * Search through str and replace all variable references ${varName} with their
- * value in storedVars.
+ * value in storedVars. 
+ * Variations: ${varName}, ${varName || defaultVarName}, ${varName || 5}
  */
-WebdriverBackedSelenium.prototype.replaceVariables = function(str) {
-  var stringResult = str;
+Selenium.prototype.replaceVariables = function (str) {
+	var stringResult = str;
 
-  // Find all of the matching variable references
-  var match = stringResult.match(/\$\{[^\}]+\}/g); 
-  if (!match) {
-    return stringResult;
-  }
+	// Find all of the matching variable references
+	///////// only change is here to support . (dot) in variables
+	var match = stringResult.match(/\$\{[^\}]+\}/g);
+	if (!match) {
+		return stringResult;
+	}
 
-  // For each match, lookup the variable value, and replace if found
-  for (var i = 0; match && i < match.length; i++) {
-    var variable = match[i]; // The replacement variable, with ${}
-    var name = variable.substring(2, variable.length - 1); // The replacement variable without ${}
-    var replacement = storedVars[name];
-    if (replacement && typeof(replacement) === 'string' && replacement.indexOf('$') != -1) {
-      replacement = replacement.replace(/\$/g, '$$$$'); //double up on $'s because of the special meaning these have in 'replace'
-    }
-    if (replacement != undefined) {
-      stringResult = stringResult.replace(variable, replacement);
-    }
-  }
-  return stringResult;
+	// For each match, lookup the variable value, and replace if found
+	for (var i = 0; match && i < match.length; i++) {
+		var variable = match[i]; // The replacement variable, with ${}
+		var name = variable.substring(2, variable.length - 1); // The replacement variable without ${}
+		// extension for default values support
+		var defaultValue = false;
+		if (name.indexOf('||') !== -1) {
+			var parts = name.split('||');
+			name = parts[0].trim();
+			defaultValue = parts[1].trim();
+		}		
+		var replacement = storedVars[name];
+		if (!replacement && defaultValue) {
+			if (/^["'].*["']$/.test(defaultValue)) {
+				replacement = defaultValue.substring(1, defaultValue.length - 1);
+			} else {
+				replacement = storedVars[defaultValue];
+			}
+		}
+		if (replacement && typeof (replacement) === 'string' && replacement.indexOf('$') != -1) {
+			replacement = replacement.replace(/\$/g, '$$$$'); //double up on $'s because of the special meaning these have in 'replace'
+		}
+		if (replacement != undefined) {
+			stringResult = stringResult.replace(variable, replacement);
+		}
+	}
+	return stringResult;
 };
 
 function webdriverBackedSeleniumBuilder() {
